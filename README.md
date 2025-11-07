@@ -46,10 +46,10 @@ Start Frontend
 
 npm start
 
-React app will run on: http://localhost:3000
+React app will run on: http://localhost:3200
 
 Open in Browser
-Visit http://localhost:3000 to use the E-Commerce Cart.
+Visit http://localhost:3200 to use the E-Commerce Cart.
 
 🔗 API Endpoints
 
