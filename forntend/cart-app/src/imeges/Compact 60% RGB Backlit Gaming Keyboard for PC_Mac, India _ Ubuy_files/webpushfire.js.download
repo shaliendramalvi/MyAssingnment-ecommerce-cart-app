@@ -1,0 +1,208 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging.js";
+
+var userAgentType = navigator.userAgent;
+var uba_hostname = window.location.origin;
+var uba_currenturl = window.location.href.toString();
+var newcookie = "";
+
+var WEBPUSH_URL = uba_baseurl + "ubuywebanalytics/";
+navigator.serviceWorker.getRegistrations().then(function (registrations) {
+    for (let registration of registrations) {
+        registration.update();
+    }
+})
+function getCacheWithExpiryNew(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+        return "";
+    }
+    const item = JSON.parse(itemStr);
+    const now = new Date()
+    if (now.getTime() > item.expiry) {
+        localStorage.removeItem(key);
+        return "";
+    }
+
+    return item.value
+}
+function getMiliSecondTime() {
+    var d = new Date();
+    var time = d.getTime();
+    return time;
+}
+
+function newcookieId() {
+    var navigator_info = window.navigator;
+    var screen_info = window.screen;
+    var uid = navigator_info.mimeTypes.length;
+    uid += navigator_info.userAgent.replace(/\D+/g, '');
+    uid += navigator_info.plugins.length;
+    uid += screen_info.height || '';
+    uid += screen_info.width || '';
+    uid += screen_info.pixelDepth || '';
+
+    return uid;
+
+}
+
+
+
+function setTrackCookiesNew() {
+
+    cookie = newcookieId();
+    var time = getMiliSecondTime();
+    var uuid = cookie + time
+    //setCacheWithExpiryNew('new_session_id', uuid, 525600);
+    return uuid;
+}
+
+
+
+var uba_cookieId = newcookieId();
+jQuery(document).ready(function () {
+    if (typeof uba_cookieId == "undefined" && uba_cookieId == '') {
+        uba_cookieId = getCacheWithExpiry('new_session_id');
+
+    }
+    //saveCookie();
+});
+
+function saveCookie() {
+    var newcookiejson = { cookie_id: uba_cookieId, old_cookie: uba_cookieId };
+    if (uba_cookieId != '') {
+        jQuery.get(WEBPUSH_URL + 'savetoken.php?action=savecookie', { token: newcookiejson }).done(function (data, status) {
+
+        });
+    }
+}
+
+var config = {
+    apiKey: "AIzaSyCLQcQB0Gcz74uCObgoKaUWS-lF776Oss4",
+    authDomain: "ubuy-1000.firebaseapp.com",
+    databaseURL: "https://ubuy-1000.firebaseio.com",
+    projectId: "ubuy-1000",
+    storageBucket: "ubuy-1000.appspot.com",
+    messagingSenderId: "846617631052",
+    appId: "1:846617631052:web:d5abae601f151e6ff7d7e9",
+    measurementId: "G-X9C2RJRRST"
+};
+const app = initializeApp(config);
+
+const messaging = getMessaging(app);
+
+if ("Notification" in window) {
+    if (Notification.permission === "granted") {
+        if (isTokenSentToServer()) {
+
+        } else {
+            getRegToken('allow');
+        }
+    } else {
+        Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+                if (isTokenSentToServer()) {
+
+                } else {
+                    getRegToken('allow');
+                }
+            }
+        });
+    }
+}
+
+
+function getRegToken(permission) {
+    const currentToken = getToken(messaging, { vapidKey: 'BFItmIfyjCHJX83gYWGnAJN6WGWLR73IcIUddIoyEHXXuK3naXXYmjJmQ9TRAggyHqTrfpjEzOHvNaSWz0ekgbc' })
+        .then(function (currentToken) {
+            if (currentToken) {
+                var token = currentToken;
+                console.log("token => "+token);
+                jQuery("#devicetoken").html(token);
+                var tokenJson = { permission: permission, token: token, device_id: uba_cookieId };
+                saveToken(tokenJson);
+            }
+        }).catch(function (err) {
+
+
+        });
+
+}
+
+
+
+
+function isTokenSentToServer() {
+    return getCacheWithExpiryNew('sentToServer');
+}
+
+function saveToken(tokenJson) {
+
+    tokenJson.siteurl = uba_baseurl;
+    tokenJson.weburl = uba_weburl;
+    tokenJson.currenturl = uba_currenturl;
+    tokenJson.useragent = userAgentType;
+    tokenJson.userip = uba_user_ip;
+    tokenJson.store_id = uba_store_id;
+    tokenJson.website_id = uba_website_id;
+    tokenJson.page = uba_currentPage;
+    tokenJson.is_mobile = uba_is_mobile;
+    tokenJson.hostname = uba_hostname;
+    tokenJson.current_url = uba_currenturl;
+    tokenJson.new_device_id = uba_cookieId;
+    jQuery.ajax({
+        url: WEBPUSH_URL + 'savetoken.php?action=savetoken',
+        method: 'post',
+        data: tokenJson
+    })
+        .done(function (result) {                      
+            result = JSON.parse(result);
+            if (result.data.permission == 'allow' && result.status == true) {
+                setCacheWithExpiryNew('sentToServer', result.status, 3600*2);
+            }
+
+        })
+}
+
+onMessage(function (payload) {
+    var notificationTitle = payload.data.title;
+    const notificationOptions = {
+        body: payload.data.body,
+        icon: payload.data.icon,
+        image: payload.data.image,
+        click_action: payload.data.url,
+        data: {
+            click_action: payload.data.url
+        }
+    };
+
+    var notification = new Notification(notificationTitle, notificationOptions);
+});
+
+function setCacheWithExpiryNew(key, value, minute) {
+
+    const now = new Date();
+    const item = {
+        value: value,
+        expiry: now.getTime() + minute * 60000,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+}
+
+function getCacheWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+    if (!itemStr) {
+        return "";
+    }
+    const item = JSON.parse(itemStr);
+    const now = new Date()
+    if (now.getTime() > item.expiry) {
+        localStorage.removeItem(key);
+        return "";
+    }
+    return item.value
+}
+
+
+

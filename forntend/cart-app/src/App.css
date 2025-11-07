@@ -1,0 +1,81 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #f9fbe7, #e0f2f1);
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 90%;
+  max-width: 900px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  color: #00796b;
+  margin-bottom: 30px;
+}
+
+h2 {
+  border-bottom: 2px solid #80cbc4;
+  color: #004d40;
+  padding-bottom: 5px;
+}
+
+.product-item,
+.cart-item {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-img {
+  width: 70px;
+  height: 70px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+button {
+  background: #00796b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #004d40;
+}
+
+.discount-box {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.discount-box input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.total-box {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e0f7fa;
+  border-radius: 10px;
+}

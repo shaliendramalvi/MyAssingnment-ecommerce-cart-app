@@ -1,0 +1,102 @@
+/* global ubuyPaypal, review, paypal, fetch */
+
+var loadPaypalJs = function (clientId, currency) {
+    ubuyPaypal.clientId = clientId;
+    ubuyPaypal.currency = currency;
+    if (!ubuyPaypal.paypalJsInitialized) {
+        ubuyPaypal.loadPaypalJs();
+    }
+};
+
+class UbuyPaypal {
+
+    instance = null;
+    card = null;
+    clientId = null;
+    saveStatusUrl = null;
+    createOrderUrl = null;
+    reviewOrderUrl = null;
+    paypalJsInitialized = false
+
+    loadPaypalJs() {
+        var script = document.getElementsByTagName('script')[0];
+
+        var paypalJs = document.createElement('script');
+        paypalJs.src = "https://www.paypal.com/sdk/js?client-id=" + ubuyPaypal.clientId + "&currency=" + ubuyPaypal.currency;
+
+        script.parentNode.insertBefore(paypalJs, script);
+        ubuyPaypal.paypalJsInitialized = true;
+    }
+
+    initPaypalButton() {
+        if (typeof paypal === 'undefined') {
+            setTimeout(ubuyPaypal.initPaypalButton, 250);
+            return;
+        }
+
+        paypal.Buttons({
+            style: {
+                layout: 'horizontal',
+                tagline: false,
+                shape: 'rect'
+            },
+            // Call your server to set up the transaction
+            createOrder: function (data, actions) {
+                var product_form = jQuery('#' + ubuyPaypal.productForm);
+                var form_url = product_form.attr("action");
+                var form_data = product_form.serialize();
+
+                let formData = new FormData();
+                formData.append("form_url", form_url);
+                formData.append("form_data", form_data);
+
+                return fetch(ubuyPaypal.createOrderUrl, {
+                    method: 'POST',
+                    body: formData
+                }).then(function (res) {
+                    return res.json();
+                }).then(function (orderData) {
+                    return orderData.id;
+                });
+            },
+
+            // Call your server to finalize the transaction
+            onApprove: function (data, actions) {
+                ubuyPaypal.reviewOrder(data, data.orderID);
+            }
+
+        }).render('#paypal-button');
+    }
+
+    reviewOrder(data, orderID) {
+        var product_form = jQuery('#' + ubuyPaypal.productForm);
+        var form_url = product_form.attr("action");
+        var form_data = product_form.serialize();
+
+        var params = {
+            paypalspb_order_id: orderID,
+            paypalspb_order_data: JSON.stringify(data),
+            form_url: form_url,
+            form_data: form_data
+        };
+
+        showLoaderImageAbs();
+        jQuery.ajax({
+            url: this.reviewOrderUrl,
+            type: 'POST',
+            data: params,
+            dataType: 'json'
+        }).done(function (response) {
+            hideLoaderImageAbs();
+            if (response.success) {
+                location.href = response.redirect;
+            } else {
+                alert(response.message);
+            }
+        }).always(function () {
+            hideLoaderImageAbs();
+        });
+    }
+}
+
+var ubuyPaypal = new UbuyPaypal();
